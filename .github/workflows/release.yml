@@ -1,0 +1,67 @@
+# Compila el .exe y crea un Release en GitHub cada vez que subes una etiqueta v*
+# Ejemplo:  git tag v1.0.0  &&  git push origin v1.0.0
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        rid: [win-x64, win-arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Versión desde la etiqueta
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}" -replace '^v', ''
+          if ($v -notmatch '^\d+\.\d+\.\d+') { $v = "1.0.0" }
+          "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publicar
+        run: >
+          dotnet publish src/DynamicIsland/DynamicIsland.csproj
+          -c Release -r ${{ matrix.rid }}
+          -p:Version=${{ env.VERSION }}
+          -o publish/${{ matrix.rid }}
+
+      - name: Empaquetar
+        shell: pwsh
+        run: |
+          Copy-Item publish/${{ matrix.rid }}/DynamicIsland.exe "DynamicIsland-${{ matrix.rid }}.exe"
+          Compress-Archive -Path "DynamicIsland-${{ matrix.rid }}.exe" -DestinationPath "DynamicIsland-${{ matrix.rid }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DynamicIsland-${{ matrix.rid }}
+          path: DynamicIsland-${{ matrix.rid }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true

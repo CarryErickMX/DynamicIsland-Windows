@@ -1,0 +1,343 @@
+<Window x:Class="DynamicIsland.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dynamic Island"
+        Width="440" Height="260"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        FontFamily="Segoe UI Variable Display, Segoe UI"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <!-- ===== RECURSOS DE TEMA (oscuro por defecto; ApplyTheme los reemplaza) ===== -->
+        <LinearGradientBrush x:Key="IslandBg" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#E6202330" Offset="0"/>
+            <GradientStop Color="#EB0E1018" Offset="0.6"/>
+            <GradientStop Color="#F0080A10" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="IslandBorder" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#B0FFFFFF" Offset="0"/>
+            <GradientStop Color="#30FFFFFF" Offset="0.25"/>
+            <GradientStop Color="#10FFFFFF" Offset="0.55"/>
+            <GradientStop Color="#70FFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="SheenBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Color="#26FFFFFF" Offset="0"/>
+            <GradientStop Color="#08FFFFFF" Offset="0.35"/>
+            <GradientStop Color="#00FFFFFF" Offset="0.6"/>
+            <GradientStop Color="#0AA0C4FF" Offset="1"/>
+        </LinearGradientBrush>
+        <RadialGradientBrush x:Key="GlowBrush" Center="0.75,1.1" GradientOrigin="0.75,1.1" RadiusX="0.7" RadiusY="0.9">
+            <GradientStop Color="#403A7BFF" Offset="0"/>
+            <GradientStop Color="#00000000" Offset="1"/>
+        </RadialGradientBrush>
+        <LinearGradientBrush x:Key="VolumeBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#7FA8FF" Offset="0"/>
+            <GradientStop Color="#C9DBFF" Offset="0.6"/>
+            <GradientStop Color="#FFFFFF" Offset="1"/>
+        </LinearGradientBrush>
+        <SolidColorBrush x:Key="TextPrimary" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#A8A8A8"/>
+        <SolidColorBrush x:Key="TextTertiary" Color="#9A9A9A"/>
+        <SolidColorBrush x:Key="IconBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="VolIconBrush" Color="#C9DBFF"/>
+        <SolidColorBrush x:Key="TrackBrush" Color="#26FFFFFF"/>
+        <SolidColorBrush x:Key="ArtPlaceholderBg" Color="#333333"/>
+        <SolidColorBrush x:Key="ArtPlaceholderFg" Color="#777777"/>
+        <SolidColorBrush x:Key="ArtBorder" Color="#50FFFFFF"/>
+        <SolidColorBrush x:Key="ThumbBrush" Color="#FFFFFF"/>
+
+        <!-- Botón estilo iPhone: sin fondo, solo ícono blanco relleno -->
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{DynamicResource IconBrush}"/>
+            <Setter Property="Width" Value="56"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Margin" Value="10,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="Root" Background="Transparent" RenderTransformOrigin="0.5,0.5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.75"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="Root" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.88" ScaleY="0.88"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Íconos rellenos con esquinas redondeadas -->
+        <Style x:Key="MediaIcon" TargetType="Path">
+            <Setter Property="Fill" Value="{DynamicResource IconBrush}"/>
+            <Setter Property="Stroke" Value="{DynamicResource IconBrush}"/>
+            <Setter Property="StrokeThickness" Value="2.2"/>
+            <Setter Property="StrokeLineJoin" Value="Round"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+        </Style>
+
+        <Style x:Key="EqBar" TargetType="Rectangle">
+            <Setter Property="Width" Value="3"/>
+            <Setter Property="Height" Value="14"/>
+            <Setter Property="Margin" Value="1,0"/>
+            <Setter Property="RadiusX" Value="1.5"/>
+            <Setter Property="RadiusY" Value="1.5"/>
+            <Setter Property="Fill" Value="{DynamicResource IconBrush}"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,8,0,0">
+        <Border x:Name="Island"
+                Width="180" Height="36" CornerRadius="18"
+                BorderThickness="1.2"
+                Background="{DynamicResource IslandBg}"
+                BorderBrush="{DynamicResource IslandBorder}"
+                MouseEnter="Island_MouseEnter"
+                MouseLeave="Island_MouseLeave"
+                MouseWheel="Island_MouseWheel">
+            <!-- Vidrio, borde y sombra según el tema -->
+            <Border.Effect>
+                <DropShadowEffect x:Name="IslandShadow" BlurRadius="16" ShadowDepth="2" Opacity="0.45" Color="Black"/>
+            </Border.Effect>
+
+            <Border.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Tema">
+                        <MenuItem x:Name="ThemeAutoItem" Header="Automático (según Windows)"
+                                  IsCheckable="True" Click="ThemeAuto_Click"/>
+                        <MenuItem x:Name="ThemeDarkItem" Header="Oscuro"
+                                  IsCheckable="True" Click="ThemeDark_Click"/>
+                        <MenuItem x:Name="ThemeLightItem" Header="Claro"
+                                  IsCheckable="True" Click="ThemeLight_Click"/>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="StartupItem" Header="Iniciar con Windows"
+                              IsCheckable="True" Click="StartupItem_Click"/>
+                    <Separator/>
+                    <MenuItem Header="Salir" Click="Exit_Click"/>
+                </ContextMenu>
+            </Border.ContextMenu>
+
+            <Grid ClipToBounds="True">
+
+                <!-- Reflejo superior del vidrio -->
+                <Border x:Name="Sheen" CornerRadius="18" IsHitTestVisible="False" Background="{DynamicResource SheenBrush}"/>
+
+                <!-- Resplandor azul tenue (como el fondo de tu captura) -->
+                <Border IsHitTestVisible="False" Opacity="0.55" Background="{DynamicResource GlowBrush}"/>
+
+                <!-- ===== VISTA COMPACTA ===== -->
+                <Grid x:Name="CompactView" Margin="8,0,12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border x:Name="MiniArt" Grid.Column="0" Width="24" Height="24"
+                            CornerRadius="7" Background="{DynamicResource ArtPlaceholderBg}" Visibility="Collapsed"
+                            BorderThickness="1" BorderBrush="{DynamicResource ArtBorder}"
+                            VerticalAlignment="Center"/>
+
+                    <TextBlock x:Name="ClockText" Grid.Column="1" Text="00:00"
+                               Foreground="{DynamicResource TextPrimary}" FontSize="13" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                    <StackPanel x:Name="EqBars" Grid.Column="2" Orientation="Horizontal"
+                                VerticalAlignment="Center" Visibility="Collapsed">
+                        <Rectangle x:Name="Bar1" Style="{StaticResource EqBar}"><Rectangle.RenderTransform><ScaleTransform ScaleY="0.4"/></Rectangle.RenderTransform></Rectangle>
+                        <Rectangle x:Name="Bar2" Style="{StaticResource EqBar}"><Rectangle.RenderTransform><ScaleTransform ScaleY="0.4"/></Rectangle.RenderTransform></Rectangle>
+                        <Rectangle x:Name="Bar3" Style="{StaticResource EqBar}"><Rectangle.RenderTransform><ScaleTransform ScaleY="0.4"/></Rectangle.RenderTransform></Rectangle>
+                        <Rectangle x:Name="Bar4" Style="{StaticResource EqBar}"><Rectangle.RenderTransform><ScaleTransform ScaleY="0.4"/></Rectangle.RenderTransform></Rectangle>
+                    </StackPanel>
+
+                    <TextBlock x:Name="BatteryCompact" Grid.Column="2" Text=""
+                               Foreground="{DynamicResource TextSecondary}" FontSize="12"
+                               VerticalAlignment="Center" Visibility="Collapsed"/>
+                </Grid>
+
+                <!-- ===== VISTA EXPANDIDA: MÚSICA ===== -->
+                <Grid x:Name="MediaView" Margin="20,14,20,38" Visibility="Collapsed" Opacity="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Grid.Row="0" LastChildFill="False">
+                        <TextBlock x:Name="MediaHeaderClock" DockPanel.Dock="Left"
+                                   Foreground="{DynamicResource TextTertiary}" FontSize="12"/>
+                        <TextBlock x:Name="MediaHeaderBattery" DockPanel.Dock="Right"
+                                   Foreground="{DynamicResource TextTertiary}" FontSize="12"/>
+                    </DockPanel>
+
+                    <Grid Grid.Row="1" Margin="0,8,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="64"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="BigArt" Width="64" Height="64" CornerRadius="15" Background="{DynamicResource ArtPlaceholderBg}"
+                                BorderThickness="1" BorderBrush="{DynamicResource ArtBorder}">
+                            <TextBlock x:Name="ArtPlaceholder" Text="&#xE8D6;"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       FontSize="26" Foreground="{DynamicResource ArtPlaceholderFg}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                            <TextBlock x:Name="TitleText" Text="Sin reproducción"
+                                       Foreground="{DynamicResource TextPrimary}" FontSize="16" FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="ArtistText" Text=""
+                                       Foreground="{DynamicResource TextSecondary}" FontSize="13" Margin="0,2,0,0"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <!-- Retroceder -->
+                        <Button Style="{StaticResource IconButton}" Click="Prev_Click">
+                            <Path Style="{StaticResource MediaIcon}" Width="30" Height="20"
+                                  Data="M12,2 L12,18 L2,10 Z M24,2 L24,18 L14,10 Z"/>
+                        </Button>
+                        <!-- Reproducir / Pausa -->
+                        <Button x:Name="PlayPauseBtn" Style="{StaticResource IconButton}" Click="PlayPause_Click">
+                            <Grid>
+                                <Path x:Name="PlayIcon" Style="{StaticResource MediaIcon}" Width="24" Height="28"
+                                      Data="M3,2 L21,12 L3,22 Z"/>
+                                <Path x:Name="PauseIcon" Style="{StaticResource MediaIcon}" Width="22" Height="30"
+                                      Visibility="Collapsed"
+                                      Data="M2,1 H8 V23 H2 Z M14,1 H20 V23 H14 Z"/>
+                            </Grid>
+                        </Button>
+                        <!-- Adelantar -->
+                        <Button Style="{StaticResource IconButton}" Click="Next_Click">
+                            <Path Style="{StaticResource MediaIcon}" Width="30" Height="20"
+                                  Data="M2,2 L2,18 L12,10 Z M14,2 L14,18 L24,10 Z"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- ===== VISTA EXPANDIDA: INFO (sin música) ===== -->
+                <Grid x:Name="InfoView" Margin="24,12,24,38" Visibility="Collapsed" Opacity="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="BigClock" Text="00:00" Foreground="{DynamicResource TextPrimary}"
+                                   FontSize="34" FontWeight="Light"/>
+                        <TextBlock x:Name="DateText" Text="" Foreground="{DynamicResource TextSecondary}" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <TextBlock x:Name="InfoBatteryIcon" Text="&#xE83F;"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="22" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="InfoBatteryText" Text="" Foreground="{DynamicResource TextSecondary}"
+                                   FontSize="12" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- ===== VISTA DE ACTIVIDAD ===== -->
+                <Grid x:Name="ActivityView" Margin="14,0" Visibility="Collapsed" Opacity="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="ActivityIcon" Text="&#xE945;"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               FontSize="16" Foreground="#34C759" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="ActivityText" Grid.Column="1" Text=""
+                               Foreground="{DynamicResource TextPrimary}" FontSize="13" Margin="10,0"
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="ActivityRight" Grid.Column="2" Text=""
+                               Foreground="{DynamicResource TextSecondary}" FontSize="13" VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- ===== AVISO DE VOLUMEN: compacto, misma altura que la isla ===== -->
+                <Grid x:Name="VolumeActivityView" Margin="14,0,14,0" Visibility="Collapsed" Opacity="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="VolActIcon" Text="&#xE995;"
+                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               FontSize="13" Foreground="{DynamicResource VolIconBrush}" VerticalAlignment="Center">
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#7FA8FF" Opacity="0.8"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                    <!-- Barra delgada con brillo -->
+                    <Grid Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                        <Border Height="3" CornerRadius="1.5" Background="{DynamicResource TrackBrush}"/>
+                        <Border Height="3" CornerRadius="1.5" Background="{DynamicResource VolumeBrush}"
+                                RenderTransformOrigin="0,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="VolActScale" ScaleX="0"/>
+                            </Border.RenderTransform>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Color="#A0C4FF" Opacity="0.9"/>
+                            </Border.Effect>
+                        </Border>
+                    </Grid>
+                    <TextBlock x:Name="VolActText" Grid.Column="2" Text="0" Foreground="{DynamicResource TextPrimary}"
+                               FontSize="11" FontWeight="SemiBold" MinWidth="18" TextAlignment="Right"
+                               VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- ===== CONTROL DE VOLUMEN (vistas expandidas) ===== -->
+                <Grid x:Name="VolumeRow" VerticalAlignment="Bottom" Margin="20,0,20,10" Height="22"
+                      Visibility="Collapsed" Opacity="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="28"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="32"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Clic en la bocina = silenciar / activar sonido -->
+                    <Button Style="{StaticResource IconButton}" Width="28" Height="26" Margin="0"
+                            Click="Mute_Click" ToolTip="Silenciar">
+                        <TextBlock x:Name="VolIcon" Text="&#xE995;"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="13" Foreground="{DynamicResource VolIconBrush}"/>
+                    </Button>
+
+                    <Grid x:Name="VolHit" Grid.Column="1" Margin="8,0" Background="Transparent" Cursor="Hand"
+                          MouseLeftButtonDown="Vol_MouseDown"
+                          MouseMove="Vol_MouseMove"
+                          MouseLeftButtonUp="Vol_MouseUp"
+                          SizeChanged="VolHit_SizeChanged">
+                        <Border Height="3" CornerRadius="1.5" Background="{DynamicResource TrackBrush}" VerticalAlignment="Center"/>
+                        <Border x:Name="VolFill" Height="3" CornerRadius="1.5" Width="0"
+                                Background="{DynamicResource VolumeBrush}"
+                                HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        <Ellipse x:Name="VolThumb" Width="10" Height="10" Fill="{DynamicResource ThumbBrush}"
+                                 HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Ellipse.Effect>
+                                <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.5" Color="Black"/>
+                            </Ellipse.Effect>
+                        </Ellipse>
+                    </Grid>
+
+                    <TextBlock x:Name="VolText" Grid.Column="2" Text="0" Foreground="{DynamicResource TextSecondary}"
+                               FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                </Grid>
+
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
