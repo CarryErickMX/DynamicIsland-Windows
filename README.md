@@ -19,14 +19,18 @@ Una isla flotante estilo iPhone en la parte superior de tu pantalla. Muestra la 
 - **Compatible con** Spotify, YouTube en Edge o Chrome, Reproductor multimedia y cualquier app que use los controles multimedia de Windows.
 
 ## 📥 Instalación
-1. Ve a [**Releases**](https://github.com/CarryErickMX/DynamicIsland-Windows/releases/latest) y descarga:
-   - `DynamicIsland-win-x64.zip` para la mayoría de las PC (Intel / AMD).
-   - `DynamicIsland-win-arm64.zip` para equipos ARM (Snapdragon).
-2. Descomprime y mueve `DynamicIsland.exe` a una carpeta fija, por ejemplo `C:\Programas\DynamicIsland\`.
-3. Ábrelo. No necesitas instalar .NET.
-4. Opcional: **clic derecho sobre la isla → Iniciar con Windows**.
+1. Ve a [**Releases**](https://github.com/CarryErickMX/DynamicIsland-Windows/releases/latest) y descarga el instalador:
+   - **`DynamicIsland-Setup-x64.exe`** para la mayoría de las PC (Intel / AMD).
+   - **`DynamicIsland-Setup-arm64.exe`** para equipos ARM (Snapdragon).
+2. Ábrelo y sigue el asistente: **Siguiente → Instalar → Finalizar**.
 
-> **Aviso de SmartScreen:** como el ejecutable no está firmado digitalmente, Windows puede mostrar *"Windows protegió su PC"*. Haz clic en **Más información → Ejecutar de todas formas**.
+Listo. La isla se abre al terminar y arranca sola cada vez que enciendes la PC. No necesitas permisos de administrador ni instalar .NET.
+
+> **Aviso de SmartScreen:** como el instalador no está firmado digitalmente, Windows puede mostrar *"Windows protegió su PC"*. Haz clic en **Más información → Ejecutar de todas formas**.
+
+**Para actualizar**, descarga el instalador de la versión nueva y ejecútalo encima. Reemplaza la anterior y conserva tu tema.
+
+**¿Prefieres sin instalar?** Descarga `DynamicIsland-Portable-x64.zip`, guarda el `.exe` en una carpeta fija y activa **clic derecho → Iniciar con Windows**.
 
 ## 🖱️ Uso
 | Acción | Resultado |
@@ -59,9 +63,8 @@ dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
 ```
 
 ## 🗑️ Desinstalar
-1. Clic derecho sobre la isla → desmarca **Iniciar con Windows** → **Salir**.
-2. Borra `DynamicIsland.exe`.
-3. Opcional: borra la clave `HKEY_CURRENT_USER\Software\DynamicIsland` del Registro, donde se guarda el tema elegido.
+**Configuración → Aplicaciones → Aplicaciones instaladas → Dynamic Island → Desinstalar.**
+Se cierra la isla, se quita del inicio de Windows y se borran sus preferencias.
 
 ## 📄 Licencia
 [MIT](LICENSE)

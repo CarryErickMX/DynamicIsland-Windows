@@ -1,5 +1,6 @@
-# Compila el .exe y crea un Release en GitHub cada vez que subes una etiqueta v*
-# Ejemplo:  git tag v1.0.0  &&  git push origin v1.0.0
+# Compila el .exe y el instalador, y crea un Release en GitHub
+# cada vez que subes una etiqueta v*.   Ejemplo:
+#   git tag v1.1.0  &&  git push origin v1.1.0
 name: Release
 
 on:
@@ -26,30 +27,50 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Versión desde la etiqueta
+      - name: Versión y arquitectura
         shell: pwsh
         run: |
           $v = "${{ github.ref_name }}" -replace '^v', ''
           if ($v -notmatch '^\d+\.\d+\.\d+') { $v = "1.0.0" }
+          $arch = "${{ matrix.rid }}" -replace '^win-', ''
           "VERSION=$v" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "ARCH=$arch" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Publicar
+      - name: Publicar .exe
         run: >
           dotnet publish src/DynamicIsland/DynamicIsland.csproj
           -c Release -r ${{ matrix.rid }}
           -p:Version=${{ env.VERSION }}
-          -o publish/${{ matrix.rid }}
+          -o publish/${{ env.ARCH }}
 
-      - name: Empaquetar
+      - name: Instalar Inno Setup
         shell: pwsh
         run: |
-          Copy-Item publish/${{ matrix.rid }}/DynamicIsland.exe "DynamicIsland-${{ matrix.rid }}.exe"
-          Compress-Archive -Path "DynamicIsland-${{ matrix.rid }}.exe" -DestinationPath "DynamicIsland-${{ matrix.rid }}.zip"
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Crear instalador
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            "/DMyVersion=${{ env.VERSION }}" `
+            "/DMyArch=${{ env.ARCH }}" `
+            "/DMySource=$PWD\publish\${{ env.ARCH }}" `
+            installer\DynamicIsland.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Empaquetar versión portable
+        shell: pwsh
+        run: |
+          Copy-Item "publish/${{ env.ARCH }}/DynamicIsland.exe" "DynamicIsland.exe"
+          Compress-Archive -Path "DynamicIsland.exe" -DestinationPath "dist/DynamicIsland-Portable-${{ env.ARCH }}.zip"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: DynamicIsland-${{ matrix.rid }}
-          path: DynamicIsland-${{ matrix.rid }}.zip
+          name: DynamicIsland-${{ env.ARCH }}
+          path: dist/*
 
   release:
     needs: build
@@ -63,5 +84,5 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.zip
+          files: dist/*
           generate_release_notes: true
