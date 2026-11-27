@@ -1,7 +1,7 @@
 ; =====================================================================
 ;  Instalador de Dynamic Island para Windows (Inno Setup 6)
 ;  Lo compila GitHub Actions en cada versión. Valores recibidos:
-;    /DMyVersion=1.1.0   /DMyArch=x64|arm64   /DMySource=ruta\al\publish
+;    /DMyVersion=1.3.0   /DMyArch=x64|arm64   /DMySource=ruta\al\publish
 ; =====================================================================
 
 #ifndef MyVersion
@@ -39,6 +39,11 @@ DisableProgramGroupPage=yes
 
 UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExe}
+
+; Identidad visual propia (ícono del instalador e imágenes del asistente)
+SetupIconFile=..\src\DynamicIsland\Assets\DynamicIsland.ico
+WizardImageFile=wizard-large-164.bmp,wizard-large-328.bmp
+WizardSmallImageFile=wizard-small-55.bmp,wizard-small-110.bmp
 
 OutputDir=..\dist
 OutputBaseFilename=DynamicIsland-Setup-{#MyArch}
@@ -82,7 +87,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExe}"; Tasks: deskto
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; \
     ValueType: string; ValueName: "DynamicIsland"; ValueData: """{app}\{#MyAppExe}"""; \
     Tasks: startup; Flags: uninsdeletevalue
-; Al desinstalar también se borran las preferencias (tema)
+; Al desinstalar también se borran las preferencias (tema, notificaciones, pantalla completa)
 Root: HKCU; Subkey: "Software\DynamicIsland"; Flags: uninsdeletekey
 
 [Run]

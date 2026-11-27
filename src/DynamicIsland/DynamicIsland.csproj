@@ -10,6 +10,9 @@
     <AssemblyName>DynamicIsland</AssemblyName>
     <RootNamespace>DynamicIsland</RootNamespace>
 
+    <!-- Ícono del .exe (Explorador, menú Inicio, Administrador de tareas) -->
+    <ApplicationIcon>Assets\DynamicIsland.ico</ApplicationIcon>
+
     <!-- Metadatos visibles en Propiedades del .exe -->
     <Product>Dynamic Island para Windows</Product>
     <Description>Isla dinámica estilo iPhone para Windows: música, volumen, batería y hora.</Description>
